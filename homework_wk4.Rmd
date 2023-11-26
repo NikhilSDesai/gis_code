@@ -1,0 +1,51 @@
+---
+title: "wk4_homework"
+output: html_document
+date: "2023-11-25"
+---
+
+```{r}
+#load libraries
+library(sf)
+library(rgdal)
+library(rJava)
+library(tidyverse)
+library(here)
+library(countrycode)
+library(janitor)
+
+#read in data files
+
+world_countries <- st_read(here::here("World_Countries_Generalized/World_Countries_Generalized.shp"))
+
+gender_inequality <- read_csv(here::here("HDR21-22_Composite_indices_complete_time_series.csv"),
+                              locale = locale(encoding = "latin1"),
+                              na = " ", skip = 0)
+
+#Clean data
+
+tidy_gender <- gender_inequality %>%
+  janitor::clean_names(.) %>%
+  select(iso3, country, hdi_2010, hdi_2019) %>%
+  mutate(difference = hdi_2019 - hdi_2010) %>%
+  #transform 2 letter ISO to 3 letter
+  mutate(iso_code=countrycode(country, origin= 'country.name', destination = 'iso2c'))
+
+
+#join data
+
+joined_data <- tidy_gender %>%
+  janitor::clean_names(., ) %>%
+  left_join(., world_countries,
+            by = c("iso_code" = "ISO"))
+
+#clean names in joined data
+
+clean_joined <- joined_data %>%
+  janitor::clean_names(., ) %>%
+  select(iso3, country, difference, shape_leng, shape_area, geometry)
+
+```
+
+
+
